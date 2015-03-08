@@ -1,6 +1,6 @@
 # Digital camera identification tool
 
-The implementation is based on [Digital Camera Identification from Sensor Pattern Noise](http://www.ws.binghamton.edu/fridrich/Research/double.pdf).
+The implementation is based on [Digital Camera Identification from Sensor Pattern Noise](http://www.ws.binghamton.edu/fridrich/Research/double.pdf) (Lukáš, Fridrich and Goljan). My [multimedia forensics bibliography](https://micrological.appspot.com/static/cl/bibliography/index.html#camera-identification) lists more papers on this topic.
 
 Prerequisites:
 - pip install pillow cython pywavelets
