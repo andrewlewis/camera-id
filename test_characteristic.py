@@ -12,7 +12,7 @@ from PIL import Image, ImageOps
 TILE_OVERLAP = 8
 
 if len(sys.argv) != 3:
-  print "Usage:\n\t%s noise_data.dat path_with_png_files" % (sys.argv[0],)
+  print "Usage:\n\t%s noise_file_name path_with_png_files" % (sys.argv[0],)
   sys.exit(0)
 
 noise_file_name = sys.argv[1]
@@ -28,7 +28,7 @@ file_list = glob.glob(image_path_name + '/*.png')
 print "Processing %d images" % (len(file_list),)
 for f in file_list:
   # Get this image's noise.
-  image_noise = get_noise_from_file(f)
+  image_noise = get_noise_from_file(f)[1]
   image_noise_average = numpy.average(image_noise)
   image_noise -= image_noise_average
   image_noise_norm = numpy.sqrt(numpy.sum(image_noise * image_noise))

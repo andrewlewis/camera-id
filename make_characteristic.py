@@ -89,12 +89,9 @@ def get_noise(greyscale_matrix):
 
   # Subtract the denoised image from the original to get an estimate of the
   # noise.
-  result_matrix = greyscale_matrix[
-                     TILE_OVERLAP : tiled_shape[0] - TILE_OVERLAP,
-                     TILE_OVERLAP : tiled_shape[1] - TILE_OVERLAP] \
-                     - result_matrix
-
-  return result_matrix
+  original = greyscale_matrix[TILE_OVERLAP : tiled_shape[0] - TILE_OVERLAP,
+                              TILE_OVERLAP : tiled_shape[1] - TILE_OVERLAP]
+  return (result_matrix, original - result_matrix)
 
 def get_noise_from_file(file_name):
   original = Image.open(file_name)
@@ -102,31 +99,28 @@ def get_noise_from_file(file_name):
   greyscale_vector = numpy.fromstring(greyscale.tostring(), dtype=numpy.uint8)
   greyscale_matrix = numpy.reshape(greyscale_vector,
                                    (original.size[1], original.size[0]))
-  noise_matrix = get_noise(greyscale_matrix)
-  return noise_matrix
+  return get_noise(greyscale_matrix)
 
 # Command line utility for creating the characteristic.
 if __name__ == '__main__':
-  if len(sys.argv) != 2:
-    print "Usage:\n\t%s path_with_png_files" % (sys.argv[0],)
+  if len(sys.argv) != 3:
+    print "Usage:\n\t%s path_with_png_files output_file_name" % (sys.argv[0],)
     sys.exit(0)
 
   # Get a list of images to process.
   file_list = glob.glob(sys.argv[1] + '/*.png')
   print "Processing %d images" % (len(file_list),)
 
-  # Denoise each image, and add the noise to the average_buffer.
-  average_buffer = None
+  # Denoise and build the numerator/denominator.
+  numerator = None
+  denominator = None
   for i, f in enumerate(file_list):
     print "Processing %03d %s" % (i, f,)
-    noise_matrix = get_noise_from_file(f)
-    if average_buffer == None:
-      average_buffer = numpy.zeros_like(noise_matrix)
-    average_buffer += noise_matrix
+    (denoised_matrix, residual_matrix) = get_noise_from_file(f)
+    if numerator is None:
+      numerator = numpy.zeros_like(residual_matrix)
+      denominator = numpy.zeros_like(residual_matrix)
+    numerator += denoised_matrix * residual_matrix
+    denominator += denoised_matrix * denoised_matrix
 
-    # Dump the average buffer to a file on every iteration.
-    numpy.savetxt('noise_data.dat', average_buffer)
-    # To output the noise signal: Image.fromstring('L',
-    # (average_buffer.shape[1], average_buffer.shape[0]),
-    # ((255.0 + (average_buffer / (i + 1))) / 2.0).astype(numpy.uint8)
-    # .tostring()).save('noise%03d.png' % (i,), 'PNG')
+  numpy.savetxt(sys.argv[2], numerator / denominator)
